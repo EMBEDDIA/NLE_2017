@@ -9,7 +9,7 @@ import numpy as np
 def build_model(unigrams_shape, num_classes, charvec_shape, char_vocab_size):
 
     inputs = []
-    optimizer = Adam(lr=0.008)
+    optimizer = Adam(lr=0.0008)
 
     #tfidf matrix input
     tfidf_matrix = Input(shape=(unigrams_shape,))
