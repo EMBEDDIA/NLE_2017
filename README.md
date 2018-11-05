@@ -11,15 +11,14 @@ To reproduce the results published in the paper run the code in the command line
 python3 train.py
 
 
-You can also use the system on your own custom datasets:<br/>
-Following arguments are available:
+You can also use the system on your own custom datasets. Following arguments are available:
 
 --data_directory : Path to data directory<br/>
 --train_corpus : Path to train corpus - first column should be text, second a label. Columns should be separated by tab.<br/>
 --dev_corpus : Path to development corpus - first column should be text, second a label. Columns should be separated by tab..<br/>
 --test_corpus: Path to test corpus - first column should be text, second a label. Columns should be separated by tab.
 
-For further costumization, you can tweak the code.
+For further costumization, just tweak the code or send me an email (matej.martinc@ijs.si) :).
 
 
 ## Contributors to the code ##
