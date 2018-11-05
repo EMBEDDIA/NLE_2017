@@ -17,7 +17,7 @@ def read_dslccv40_corpus(input, directory, name):
             data.append([text, c])
     headers = data.pop(0)
     df = pd.DataFrame(data, columns=headers)
-    df.to_csv(directory + name, encoding="utf8", sep='\t', index=False)
+    df.to_csv(directory + name +'.csv', encoding="utf8", sep='\t', index=False)
     return df
 
 
@@ -41,7 +41,7 @@ def add_language_group(df_data):
 if __name__ == '__main__':
     start_time = time.time()
     # run from command line
-    # e.g. python3 gender_classification.py --input './pan17-author-profiling-training-dataset-2017-03-10' --output results --language en
+    # e.g. python3 train.py
 
     argparser = argparse.ArgumentParser(description='Language variety classification')
 
