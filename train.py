@@ -60,8 +60,8 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
     train_data_all = args.train_corpus
-    dev_data_all = args.train_corpus
-    test_data_all = args.train_corpus
+    dev_data_all = args.dev_corpus
+    test_data_all = args.test_corpus
     directory = args.data_directory
 
     train_data_all = read_dslccv40_corpus(train_data_all, directory, name='train')
