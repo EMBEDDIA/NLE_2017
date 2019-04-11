@@ -98,7 +98,7 @@ if __name__ == '__main__':
     weighting = args.weighting
 
     assert experiment in ['DSLCC', 'ADIC', 'GDIC', 'OTH'], "Invalid experiemnt argument!"
-    assert weighting in ['TFIDF', 'BM25'], "Invalid weighting argument!"
+    assert weighting in ['tfidf', 'bm25'], "Invalid weighting argument!"
 
     if experiment == 'DSLCC':
 
@@ -176,28 +176,31 @@ if __name__ == '__main__':
         test_all(data_test, target, drop, weighting=weighting)
 
     else:
-        if experiment == 'ADI':
+        if experiment == 'ADIC':
             target = 'variety'
             lang = 'ar'
             drop = []
 
-            data_train_valid = read_adi_corpus('data/adic/Q-TRAIN.txt')
+            data_train_valid = read_adi_corpus('data/adic/Q-train.txt')
             data_train_valid = data_train_valid.sample(frac=1)
             data_train = data_train_valid[:int(data_train_valid.shape[0] * 0.9)]
             data_val = data_train_valid[int(data_train_valid.shape[0] * 0.9):]
-            data_test = read_adi_corpus('data/adic/Q-TEST.txt')
+            data_test = read_adi_corpus('data/adic/Q-gold.txt')
 
 
-        elif experiment == 'GDI':
+        elif experiment == 'GDIC':
             target = 'variety'
             lang = 'sg'
             drop = []
 
-            data_train_valid = read_corpus('data/gdic/train.txt')
+            data_train = read_corpus('data/gdic/train.txt')
+            data_valid = read_corpus('data/gdic/dev.txt')
+            data_train_valid = pd.concat([data_train, data_valid])
             data_train_valid = data_train_valid.sample(frac=1)
             data_train = data_train_valid[:int(data_train_valid.shape[0] * 0.9)]
             data_val = data_train_valid[int(data_train_valid.shape[0] * 0.9):]
-            data_test = read_corpus('data/gdic/test.txt')
+            data_test = read_corpus('data/gdic/gold.txt')
+            data_test = data_test[data_test[target] != 'XY']
 
         elif experiment == 'OTH':
             target = 'variety'
@@ -225,6 +228,7 @@ if __name__ == '__main__':
 
     print("--- Model creation in minutes ---", round(((time.time() - start_time) / 60), 2))
     print("--- Training & Testing in minutes ---", round(((time.time() - start_time) / 60), 2))
+
 
 
 
