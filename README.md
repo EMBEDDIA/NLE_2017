@@ -15,6 +15,14 @@ python3 train.py --experiment ADIC;<br/>
 The DSLCC v4.0 and ADIC data can be found in the data folder. The GDIC corpus is not available but you can ask the Vardial 2018 GDI task administrator for a copy and download
 it in the /data/gdic folder.
 
+If you use the DSLCC v4.0 dataset, please refer to the following corpus description paper:
+Liling Tan, Marcos Zampieri, Nikola Ljubešić, Jörg Tiedemann (2014): Merging Comparable Data Sources for the Discrimination of Similar Languages: The DSL Corpus Collection.
+Proceedings of the 7th Workshop on Building and Using Comparable Corpora (BUCC). pp. 6-10. Reykjavik, Iceland.
+
+If you use the ADIC dataset, please refer to the following corpus description paper:
+Ahmed Ali, Najim Dehak, Patrick Cardinal, Sameer Khurana, Sree Harsha Yella, James Glass, Peter Bell, Steve Renals (2015): Automatic dialect detection in arabic broadcast speech.
+In Proceedings of Interspeech.
+
 You can also use the system on your own custom datasets. Following arguments are available:
 
 --experiment: Default is DSLCC. Other allowed values are: GDIC, ADIC and OTH (for custom datasets).<br/>

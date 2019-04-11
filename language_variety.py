@@ -130,7 +130,7 @@ def train(xtrain, ytrain, xval, yval, lang, tags_to_idx, weighting):
         pickle.dump(textmodel_data, f, protocol=2)
 
     if lang != 'all':
-        if lang not in ['gs', 'ar']:
+        if lang not in ['sg', 'ar']:
             num_epoch = 20
         else:
             num_epoch = 80
