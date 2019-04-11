@@ -40,6 +40,8 @@ def make_charvec(data, train=True, char_vocab={}, max_text_len=0):
                 char_vocab[char] = counter
                 counter += 1
         max_text_len = max([len(text) for text in data])
+        if max_text_len > 600:
+            max_text_len = 600
     else:
         if char_vocab == [] or max_text_len == 0:
             raise Exception('You have to add char vocabulary and max train text len as input')
