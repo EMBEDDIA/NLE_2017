@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import preprocessing
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
 from collections import defaultdict
+from bm25 import BM25Transformer
 import gc
 
 
@@ -71,13 +72,16 @@ class digit_col(BaseEstimator, TransformerMixin):
         return scaler.transform(hd_searches)
 
 
-def train(xtrain, ytrain, xval, yval, lang, tags_to_idx):
-    checkpointer = ModelCheckpoint(filepath="./models/model_" + lang + "_weights.hdf5",
+def train(xtrain, ytrain, xval, yval, lang, tags_to_idx, weighting):
+    if weighting =='tfidf':
+        path = "./models/model_" + lang + "_weights.hdf5"
+    elif weighting == 'bm25':
+        path = "./models/model_" + lang + "_bm25_weights.hdf5"
+    checkpointer = ModelCheckpoint(filepath=path,
                                    verbose=1,
                                    monitor="val_acc",
                                    save_best_only=True,
                                    mode="max")
-
 
     #print("Train and dev shape: ", xtrain.shape, xval.shape)
     counts = defaultdict(int)
@@ -90,12 +94,17 @@ def train(xtrain, ytrain, xval, yval, lang, tags_to_idx):
     else:
         character_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(3,5), lowercase=False, min_df=5, max_df=0.3)
 
-    tfidf_transformer = TfidfTransformer(sublinear_tf=True)
+    if weighting == 'tfidf':
+        transformer = TfidfTransformer(sublinear_tf=True)
+    elif weighting == 'bm25':
+        transformer = BM25Transformer()
+
+
 
     tfidf_matrix = pipeline.Pipeline([
         ('character', pipeline.Pipeline(
             [('s5', text_col(key='text_clean')), ('character_vectorizer', character_vectorizer),
-             ('tfidf_character', tfidf_transformer)])),
+             ('tfidf_character', transformer)])),
         ('scale', Normalizer())])
 
     tfidf_matrix = tfidf_matrix.fit(xtrain)
@@ -113,13 +122,21 @@ def train(xtrain, ytrain, xval, yval, lang, tags_to_idx):
 
     textmodel_data = ngrams_matrix_shape, num_classes, charvec_shape, char_vocab_size, tfidf_matrix, char_vocab, max_train_len_char, tags_to_idx
 
-    with open('models/model_' + lang + '_data.pk', 'wb') as f:
+    if weighting == 'tfidf':
+        data_path = 'models/model_' + lang + '_data.pk'
+    elif weighting == 'bm25':
+        data_path = 'models/model_' + lang + '_bm25_data.pk'
+    with open(data_path, 'wb') as f:
         pickle.dump(textmodel_data, f, protocol=2)
 
     if lang != 'all':
-        num_epoch = 20
+        if lang not in ['gs', 'ar']:
+            num_epoch = 20
+        else:
+            num_epoch = 80
     else:
         num_epoch = 10
+
     model = build_model(ngrams_matrix_shape, num_classes, charvec_shape, char_vocab_size)
     model.fit([tfidf_matrix_test, charvec], ytrain, validation_data=([tfidf_matrix_val, charvec_val], yval), batch_size=16, epochs=num_epoch, verbose=0, callbacks=[checkpointer])
 
@@ -129,19 +146,25 @@ def train(xtrain, ytrain, xval, yval, lang, tags_to_idx):
     return model
 
 
-def test_trained_model(data_test, target, drop, lang):
-    textmodel_data = pickle.load(open('models/model_' + lang + '_data.pk', 'rb'))
+def test_trained_model(data_test, target, drop, lang, weighting):
+    if weighting == 'tfidf':
+        data_path = 'models/model_' + lang + '_data.pk'
+    elif weighting == 'bm25':
+        data_path = 'models/model_' + lang + '_bm25_data.pk'
+
+    textmodel_data = pickle.load(open(data_path, 'rb'))
 
     unigrams_shape, num_classes, charvec_shape, char_vocab_size,tfidf_matrix, char_vocab, max_train_len_char, tags_to_idx = textmodel_data
     xtest, ytest, _ = preprocess_data(data_test, target, drop, tags_to_idx=tags_to_idx)
     tfidf_matrix_test = tfidf_matrix.transform(xtest)
     charvec_test, _, _ = make_charvec(xtest.text_clean.tolist(), train=False, char_vocab=char_vocab, max_text_len=max_train_len_char)
 
-    if lang != 'all':
-        model = build_model(unigrams_shape, num_classes, charvec_shape, char_vocab_size)
-    else:
-        model = build_model(unigrams_shape, num_classes, charvec_shape, char_vocab_size)
-    model.load_weights('{}.hdf5'.format('models/model_' + lang + '_weights'))
+    model = build_model(unigrams_shape, num_classes, charvec_shape, char_vocab_size)
+    if weighting =='tfidf':
+        path = "./models/model_" + lang + "_weights.hdf5"
+    elif weighting == 'bm25':
+        path = "./models/model_" + lang + "_bm25_weights.hdf5"
+    model.load_weights(path)
 
     predictions = model.predict([tfidf_matrix_test, charvec_test]).argmax(axis=-1)
     macro = str(f1_score(ytest, predictions, average='macro'))
@@ -155,16 +178,25 @@ def test_trained_model(data_test, target, drop, lang):
     print('Test confusion matrix:', confusion_matrix(ytest, predictions))
 
 
-def test_all(data_test, target, drop, langs=['es','fa','fr','idmy','pt','slavic']):
+def test_all(data_test, target, drop, langs=['es','fa','fr','idmy','pt','slavic'], weighting='tfidf'):
+    if weighting == 'tfidf':
+        data_path = 'models/model_all_data.pk'
+    elif weighting == 'bm25':
+        data_path = 'models/model_all_bm25_data.pk'
 
-    textmodel_data_all = pickle.load(open('models/model_all_data.pk', 'rb'))
+    textmodel_data_all = pickle.load(open(data_path, 'rb'))
+
     unigrams_shape, num_classes, charvec_shape, char_vocab_size, tfidf_matrix, char_vocab, max_train_len_char, group_tags_to_idx = textmodel_data_all
     xtest, ytest, _ = preprocess_data(data_test, target, drop, tags_to_idx=group_tags_to_idx)
     tfidf_matrix_test = tfidf_matrix.transform(xtest)
 
     charvec_test, _, _ = make_charvec(xtest.text_clean.tolist(), train=False, char_vocab=char_vocab, max_text_len=max_train_len_char)
     model = build_model(unigrams_shape, num_classes, charvec_shape, char_vocab_size)
-    model.load_weights('{}.hdf5'.format('models/model_all_weights'))
+    if weighting =='tfidf':
+        path = "./models/model_all_weights.hdf5"
+    elif weighting == 'bm25':
+        path = "./models/model_all_bm25_weights.hdf5"
+    model.load_weights(path)
 
     predictions = model.predict([tfidf_matrix_test, charvec_test]).argmax(axis=-1)
     print('Test F1 macro lang group:', f1_score(ytest, predictions, average='macro'))
@@ -184,12 +216,24 @@ def test_all(data_test, target, drop, langs=['es','fa','fr','idmy','pt','slavic'
     for lang in langs:
         lang_idx = group_tags_to_idx.index(lang)
         filtered_data = df_data.loc[df_data['lang_group_pred'] == lang_idx]
-        textmodel_data = pickle.load(open('models/model_' + lang + '_data.pk', 'rb'))
+
+        if weighting == 'tfidf':
+            data_path = 'models/model_' + lang + '_data.pk'
+        elif weighting == 'bm25':
+            data_path = 'models/model_' + lang + '_bm25_data.pk'
+        textmodel_data = pickle.load(open(data_path, 'rb'))
+
         unigrams_shape, num_classes, charvec_shape, char_vocab_size, tfidf_matrix, char_vocab, max_train_len_char, tags_to_idx = textmodel_data
         tfidf_matrix_test = tfidf_matrix.transform(filtered_data).toarray()
         charvec_test, _, _ = make_charvec(filtered_data.text_clean.tolist(), train=False, char_vocab=char_vocab, max_text_len=max_train_len_char)
         model = build_model(unigrams_shape, num_classes, charvec_shape, char_vocab_size)
-        model.load_weights('{}.hdf5'.format('models/model_' + lang + '_weights'))
+
+        if weighting == 'tfidf':
+            path = "./models/model_" + lang + "_weights.hdf5"
+        elif weighting == 'bm25':
+            path = "./models/model_" + lang + "_bm25_weights.hdf5"
+        model.load_weights(path)
+
         predictions = model.predict([tfidf_matrix_test, charvec_test]).argmax(axis=-1)
         predictions = np.array([tags_to_idx[prediction] for prediction in predictions])
         df_predictions = pd.DataFrame({'predictions': predictions})
