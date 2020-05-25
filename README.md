@@ -4,7 +4,7 @@
 
 Python 3 is needed.<br/>
 To get the code and all the data, clone the project from the repository with 'git clone http://source.ijs.si/mmartinc/NLE_2017'<br/>
-To just get the code (and some data, but not all, which means that the results from the papaer will not be reproducible), clone the project from the EMBEDDIA repository with 'git clone https://github.com/EMBEDDIA/NLE_2017'<br/>
+To just get the code (and some data, but not all, which means that the results from the paper will not be reproducible), clone the project from the EMBEDDIA repository with 'git clone https://github.com/EMBEDDIA/NLE_2017'.<br/>
 Install dependencies if needed: pip3 install -r requirements.txt
 
 To reproduce the results published in the paper run the code in the command line using following commands:
